@@ -32,7 +32,12 @@ for i in range(len(accellist)):
 forcelist = []#In (Kg*m)/(s^2) AKA Newton
 for i in range(len(velocitylist)):
     force = (mass * (accellist[i]))
-    forcelist.append(force)
+    if (accellist[i] > 0):
+        force = force + .5*(1.55)*(1.2)*(velocitylist[i]**2) #Aero force .5(CdA)(rho)(V^2)
+        forcelist.append(force)
+    else:
+        force = force - .5*(1.55)*(1.2)*(velocitylist[i]**2) #Aero force .5(CdA)(rho)(V^2)
+        forcelist.append(force)
 
 powerlist = []#In (Kg*m^2)/(s^3) AKA Watts
 for i in range(len(forcelist)):
@@ -78,9 +83,9 @@ averagehp = statistics.mean(powerlisthp)
 hpstd = statistics.stdev(powerlisthp)
 firstsigmaleft = averagehp - hpstd
 firstsigmaright = averagehp + hpstd
-plt.vlines(averagehp, 0, 600, color = 'red', label='Average Horsepower')
-plt.vlines(firstsigmaleft, 0, 600, color = 'green', label='Average-1sigma')
-plt.vlines(firstsigmaright, 0, 600, color = 'green', label='Average+1sigma')
+plt.vlines(averagehp, 0, 200, color = 'red', label='Average Horsepower')
+plt.vlines(firstsigmaleft, 0, 200, color = 'green', label='Average-1sigma')
+plt.vlines(firstsigmaright, 0, 200, color = 'yellow', label='Average+1sigma')
 plt.legend()
 plt.xlabel("Horsepower")
 plt.ylabel("Occurences")
