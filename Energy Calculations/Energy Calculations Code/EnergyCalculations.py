@@ -1,9 +1,11 @@
 import csv
+import statistics
+from matplotlib import pyplot as plt
 
 #First we need to load and parse the csv files that contain our data
-filename ="../../EnduranceData/newclean.csv" #Location of the csv file
+filename ="../../EnduranceData/truenewclean.csv" #Location of the csv file
 
-acceleration =[]
+data =[]
 masscar = 213.6 # cars mass in kilograms
 massdriver = 77.1107 #estimated drivers mass in kilograms
 mass = masscar + massdriver
@@ -12,46 +14,76 @@ with open(filename, "r") as csvfile:
     csvreader = csv.reader(csvfile , delimiter=',')
     linecount = 0
     for line in csvreader:
-        acceleration.append(line)
+        data.append(line)
 time = .002
-del acceleration[0]
-del acceleration[0]
+del data[0]
+del data[0]
 
-accellist = []
-for i in range(len(acceleration)):
-    accel = float(acceleration[i][1])*9.81
+accellist = [] #acceleration in m/s
+for i in range(len(data)):
+    accel = float(data[i][1])*9.81
     accellist.append(accel)
 
-velocitylist = []
+velocitylist = []#Velocity in m/s
 for i in range(len(accellist)):
-    if (i == 0):
-        vel = (0.00 + (accellist[i] * time)) 
-        velocitylist.append(vel)
-    else:
-        j = i-1
-        vel = velocitylist[j] + (accellist[i] * time)
-        velocitylist.append(vel) 
+    vel = float(data[i][2])*(5/18)
+    velocitylist.append(vel)
 
-forcelist = []
+forcelist = []#In (Kg*m)/(s^2) AKA Newton
 for i in range(len(velocitylist)):
     force = (mass * (accellist[i]))
     forcelist.append(force)
 
-powerlist = []
+powerlist = []#In (Kg*m^2)/(s^3) AKA Watts
 for i in range(len(forcelist)):
     power = (forcelist[i] * velocitylist[i])
     powerlist.append(power)
     
-energylist = []
+energylist = []#In Watt*s
 for i in range(len(powerlist)):
     energy = powerlist[i] *time #Watts times second
     energylist.append(energy)
 
-energytotal = 0      
-for i in range(len(powerlist)):
+energytotalpos = 0
+energytotalneg = 0
+for i in range(len(data)):
     if (energylist[i] > 0):
-        energytotal = energytotal + energylist[i]
+        energytotalpos = energytotalpos + energylist[i]
+    else:
+        energytotalneg = energytotalneg + energylist[i]
 
-energytotal = (energytotal/3600000)
-print("heloup")
+energytotalpos = (energytotalpos/3600000) #Conversion to KWH
+energytotalneg = (energytotalneg/3600000) #Conversion to KWH
+    
+powerlisthp = [] #Power in hp
+for i in range (len(powerlist)):
+    if (powerlist[i] > 0):
+        powerhp = powerlist[i]/746
+        powerlisthp.append(powerhp)
 
+powerlisthp50 = []
+newpower = 0
+for i in range (len(powerlisthp)):
+    if ((i % 100) != 0):
+        newpower = newpower + powerlisthp[i]
+    else:
+        newpower = newpower/100
+        powerlisthp50.append(newpower)
+        newpower = 0
+
+
+
+#Plotting
+averagehp = statistics.mean(powerlisthp)
+hpstd = statistics.stdev(powerlisthp)
+firstsigmaleft = averagehp - hpstd
+firstsigmaright = averagehp + hpstd
+plt.vlines(averagehp, 0, 600, color = 'red', label='Average Horsepower')
+plt.vlines(firstsigmaleft, 0, 600, color = 'green', label='Average-1sigma')
+plt.vlines(firstsigmaright, 0, 600, color = 'green', label='Average+1sigma')
+plt.legend()
+plt.xlabel("Horsepower")
+plt.ylabel("Occurences")
+plt.hist(powerlisthp50, bins=50)
+plt.show()
+print("hello")
